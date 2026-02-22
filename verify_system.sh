@@ -1,6 +1,14 @@
 #!/bin/bash
 # Quick verification script for Pi-Ai-Camera after SSH login
 
+ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$ROOT_DIR"
+
+TAILSCALE_IP=""
+if command -v tailscale >/dev/null 2>&1; then
+    TAILSCALE_IP="$(tailscale ip -4 2>/dev/null | head -n1)"
+fi
+
 echo "========================================"
 echo "Pi-Ai-Camera System Verification"
 echo "========================================"
@@ -8,7 +16,6 @@ echo ""
 
 # Check repository
 echo "📁 Repository Status:"
-cd /home/thela/Desktop/Pi-Ai-Camera-
 git status --short
 echo "Latest commit: $(git log -1 --oneline)"
 echo ""
@@ -25,7 +32,7 @@ if pgrep -f "uvicorn" > /dev/null; then
     echo "   URL: http://$(hostname -I | awk '{print $1}'):8080"
 else
     echo "❌ Backend is NOT running"
-    echo "   Start with: cd /home/thela/Desktop/Pi-Ai-Camera- && ./run.sh"
+    echo "   Start with: cd $ROOT_DIR && ./run.sh"
 fi
 echo ""
 
@@ -45,7 +52,11 @@ echo ""
 
 # Check network access
 echo "🌐 Network Access:"
-echo "   Tailscale: http://100.84.75.9:8080"
+if [ -n "$TAILSCALE_IP" ]; then
+    echo "   Tailscale: http://$TAILSCALE_IP:8080"
+else
+    echo "   Tailscale: not detected on this device"
+fi
 echo "   Local: http://$(hostname -I | awk '{print $1}'):8080"
 echo ""
 
@@ -57,7 +68,9 @@ echo ""
 
 echo "========================================"
 echo "Quick Links:"
-echo "  Live Stream: http://100.84.75.9:8080/live.html"
-echo "  Photos: http://100.84.75.9:8080/photos.html"
-echo "  Replays: http://100.84.75.9:8080/replays.html"
+if [ -n "$TAILSCALE_IP" ]; then
+    echo "  Live Stream: http://$TAILSCALE_IP:8080/live.html"
+    echo "  Photos: http://$TAILSCALE_IP:8080/photos.html"
+    echo "  Replays: http://$TAILSCALE_IP:8080/replays.html"
+fi
 echo "========================================"

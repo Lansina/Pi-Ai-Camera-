@@ -2,7 +2,6 @@
 
 This project was for my Front-End Web Development class. It is a Raspberry Pi camera setup that uses AI to detect people, supports live viewing, photo capture, and short video clips ("replays"). Accesible via simple website on local network, as well as Tailscale VPN.
 
-GitHub: https://github.com/ldiakite-clt/Pi-Ai-Camera-  
 Branch: `main`
 
 ## What's in the backend
@@ -38,7 +37,7 @@ Note: Other files are old or for reference. The main system uses `rpicam-vid` fo
 
 1. I SSH into Pi and open the project folder:
    ```bash
-   cd /home/thela/Desktop/Pi-Ai-Camera-
+  cd ~/Desktop/Pi-Ai-Camera-
 
 2. ./verify_system.sh
 
