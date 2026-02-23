@@ -1,6 +1,6 @@
 # Pi-Ai-Camera Deployment Summary (December 8, 2025)
 
-This project was for my Front-End Web Development class. It is a Raspberry Pi camera setup that uses AI to detect people, supports live viewing, photo capture, and short video clips ("replays"). Accesible via simple website on local network, as well as Tailscale VPN.
+This project was for my Front-End Web Development class. It is a Raspberry Pi camera setup that uses AI to detect people, supports live viewing, photo capture, and short video clips ("replays"). Accesible via  Tailscale VPN.
 
 Branch: `main`
 
