@@ -77,3 +77,6 @@ Thumbs.db
 
 # Local-only docs (do not publish)
 SECURITY_HARDENING.md
+
+# Ignore all Markdown
+*.md
