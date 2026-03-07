@@ -68,6 +68,11 @@ class RPiCamStreaming:
         self._stderr_thread: Optional[threading.Thread] = None
         self._stderr_line_count = 0
 
+        # Keep detection logs quiet by default; enable explicitly when tuning.
+        self._log_detection_summary = os.getenv("PICAM_LOG_DETECTION_SUMMARY", "0") in ("1", "true", "True")
+        self._log_detection_details = os.getenv("PICAM_LOG_DETECTION_DETAILS", "0") in ("1", "true", "True")
+        self._last_detection_state = False
+
         # Buffer last 5 minutes of frames for replay (at 15fps = 4500 frames)
         self._frame_buffer = deque(maxlen=4500)
         self._buffer_lock = threading.Lock()
@@ -336,7 +341,7 @@ class RPiCamStreaming:
             MIN_CONFIDENCE = 0.10
             
             detections = []
-            debug_log = []
+            debug_log = [] if self._log_detection_details else None
             
             for i in range(NUM_DETECTIONS):
                 # Check if we have valid data
@@ -351,7 +356,11 @@ class RPiCamStreaming:
                 height = (y2 - y1) if (y2 is not None and y1 is not None) else None
                 area = (width * height) if (width is not None and height is not None) else None
                 
-                debug_log.append(f"Detection {i}: class={class_val} conf={confidence} bbox=({x1},{y1},{x2},{y2}) w={width} h={height} area={area}")
+                if debug_log is not None:
+                    debug_log.append(
+                        f"Detection {i}: class={class_val} conf={confidence} "
+                        f"bbox=({x1},{y1},{x2},{y2}) w={width} h={height} area={area}"
+                    )
                 
                 # 100.0 marks end of valid detections
                 if class_val is None or class_val == 100.0:
@@ -412,9 +421,17 @@ class RPiCamStreaming:
             else:
                 self._consecutive_person_frames = 0
             
-            print(f"[Detection] Frame: {len(detections)} person(s) detected. Consecutive: {self._consecutive_person_frames}")
-            for log_entry in debug_log:
-                print(f"[Detection] {log_entry}")
+            if self._log_detection_summary and has_person != self._last_detection_state:
+                state = "detected" if has_person else "cleared"
+                print(
+                    f"[Detection] Person state {state}. "
+                    f"count={len(detections)} consecutive={self._consecutive_person_frames}"
+                )
+            self._last_detection_state = has_person
+
+            if debug_log is not None:
+                for log_entry in debug_log:
+                    print(f"[Detection] {log_entry}")
             
             # Only report detections if we have consistent detection across multiple frames
             # This prevents single-frame false positives
