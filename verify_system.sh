@@ -22,7 +22,13 @@ echo ""
 
 # Check backend files
 echo "🐍 Backend Python Files:"
-ls -lh backend/*.py | awk '{print $9, "(" $5 ")"}'
+if [[ -d "$ROOT_DIR/Backend" ]]; then
+    ls -lh Backend/*.py | awk '{print $9, "(" $5 ")"}'
+elif [[ -d "$ROOT_DIR/backend" ]]; then
+    ls -lh backend/*.py | awk '{print $9, "(" $5 ")"}'
+else
+    echo "   Backend folder not found"
+fi
 echo ""
 
 # Check if backend is running

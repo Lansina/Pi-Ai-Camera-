@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-CONFIG="$HOME/Desktop/Pi-Ai-Camera-/config/imx500_person_detection.json"
+ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+CONFIG="$ROOT_DIR/config/imx500_person_detection.json"
 META="/tmp/imx500_test_meta.json"
 OUT="/tmp/imx500_test_stream.mjpg"
 
