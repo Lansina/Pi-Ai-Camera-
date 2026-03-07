@@ -13,7 +13,9 @@ for SEC in $(seq 1 60); do
 
   FRAME_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 "$BASE/camera/frame" || echo "000")
 
-  STREAM_BYTES=$(curl -s --max-time 1 "$BASE/stream.mjpg" | wc -c | tr -d ' ')
+  # /stream.mjpg is a long-lived response; timeout is expected during 1s sampling.
+  # Keep the poll loop alive even when curl returns timeout.
+  STREAM_BYTES=$( (curl -s --max-time 1 "$BASE/stream.mjpg" || true) | wc -c | tr -d ' ' )
 
   if [[ -f "$META" ]]; then
     META_SIZE=$(stat -c%s "$META" 2>/dev/null || echo 0)
