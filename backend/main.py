@@ -21,7 +21,12 @@ import io
 from fastapi import BackgroundTasks
 
 ROOT = Path(__file__).resolve().parents[1]
-FRONTEND_DIR = ROOT / "PiDoorCam"
+
+if (ROOT / "Frontend").exists():
+    FRONTEND_DIR = ROOT / "Frontend"
+else:
+    FRONTEND_DIR = ROOT / "PiDoorCam"
+
 DATA_DIR = ROOT / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
