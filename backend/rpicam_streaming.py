@@ -65,6 +65,8 @@ class RPiCamStreaming:
         self._current_frame: Optional[bytes] = None
         self._frame_lock = threading.Lock()
         self._stream_thread: Optional[threading.Thread] = None
+        self._stderr_thread: Optional[threading.Thread] = None
+        self._stderr_line_count = 0
 
         # Buffer last 5 minutes of frames for replay (at 15fps = 4500 frames)
         self._frame_buffer = deque(maxlen=4500)
@@ -122,6 +124,14 @@ class RPiCamStreaming:
                 name="RPiCam-MJPEGReader"
             )
             self._stream_thread.start()
+
+            # Drain stderr so rpicam-vid cannot block on a full stderr pipe.
+            self._stderr_thread = threading.Thread(
+                target=self._drain_stderr,
+                daemon=True,
+                name="RPiCam-StderrDrain"
+            )
+            self._stderr_thread.start()
             
             # Start metadata monitor thread
             self._monitor_thread = threading.Thread(
@@ -162,6 +172,8 @@ class RPiCamStreaming:
         # Wait for threads
         if self._stream_thread and self._stream_thread.is_alive():
             self._stream_thread.join(timeout=2)
+        if self._stderr_thread and self._stderr_thread.is_alive():
+            self._stderr_thread.join(timeout=2)
         if self._monitor_thread and self._monitor_thread.is_alive():
             self._monitor_thread.join(timeout=2)
         
@@ -210,6 +222,39 @@ class RPiCamStreaming:
                 break
         
         print("[RPiCamStreaming] MJPEG reader stopped")
+
+    def _drain_stderr(self):
+        """Continuously read stderr from rpicam-vid to avoid pipe backpressure."""
+        if not self._process or not self._process.stderr:
+            return
+
+        print("[RPiCamStreaming] STDERR drain started")
+
+        try:
+            for raw in iter(self._process.stderr.readline, b""):
+                if not raw:
+                    break
+
+                line = raw.decode("utf-8", errors="replace").strip()
+                if not line:
+                    continue
+
+                self._stderr_line_count += 1
+
+                # Keep logs readable: always print important lines, otherwise sample.
+                important = (
+                    "error" in line.lower()
+                    or "warn" in line.lower()
+                    or "failed" in line.lower()
+                )
+                if important or self._stderr_line_count % 100 == 0:
+                    print(f"[rpicam-vid][stderr] {line}")
+
+        except Exception as e:
+            if self._running:
+                print(f"[RPiCamStreaming] STDERR drain error: {e}")
+
+        print("[RPiCamStreaming] STDERR drain stopped")
     
     def _monitor_metadata(self):
         """Monitor metadata file for detections."""
